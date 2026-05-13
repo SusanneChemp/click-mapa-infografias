@@ -121,9 +121,46 @@ function Index() {
 
   return (
     <div className="min-h-screen w-full bg-white">
+      <style>{`
+        @keyframes hotspotPulse {
+          0%, 100% { box-shadow: 0 0 0 0 rgba(26, 58, 138, 0.35), 0 0 0 0 rgba(26, 58, 138, 0.0); }
+          50%      { box-shadow: 0 0 0 10px rgba(26, 58, 138, 0.0), 0 0 22px 4px rgba(26, 58, 138, 0.18); }
+        }
+        @keyframes hintPing {
+          0%   { transform: translate(-50%, -50%) scale(0.6); opacity: 0.6; }
+          80%  { transform: translate(-50%, -50%) scale(1.6); opacity: 0; }
+          100% { transform: translate(-50%, -50%) scale(1.6); opacity: 0; }
+        }
+        @keyframes bulletIn {
+          from { opacity: 0; transform: translateX(12px); }
+          to   { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes titleIn {
+          from { opacity: 0; transform: translateY(-6px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        .hotspot-idle { animation: hotspotPulse 2.8s ease-in-out infinite; }
+        .hotspot-idle::after {
+          content: "";
+          position: absolute;
+          left: 50%; top: 50%;
+          width: 70%; height: 70%;
+          border-radius: 9999px;
+          border: 2px solid rgba(26, 58, 138, 0.5);
+          transform: translate(-50%, -50%) scale(0.6);
+          opacity: 0;
+          animation: hintPing 2.8s ease-out infinite;
+          pointer-events: none;
+        }
+        .hotspot-idle:hover { animation: none; }
+        .hotspot-idle:hover::after { animation: none; opacity: 0; }
+        .panel-title { animation: titleIn 0.4s ease-out both; }
+        .panel-bullet { animation: bulletIn 0.45s ease-out both; }
+      `}</style>
+
       <button
         onClick={() => setDevMode((v) => !v)}
-        className="fixed top-3 left-3 z-50 rounded-md bg-black/70 px-3 py-1.5 text-xs font-medium text-white hover:bg-black"
+        className="fixed top-3 left-3 z-50 rounded-md bg-black/70 px-3 py-1.5 text-xs font-medium text-white shadow-lg backdrop-blur transition-all duration-200 hover:scale-105 hover:bg-black"
       >
         {devMode ? "Hide Hotspots" : "Show Hotspots"}
       </button>
@@ -143,10 +180,10 @@ function Index() {
               onClick={() => setActive(s)}
               aria-label={`Abrir información sobre ${s.title.replace(/^\d+\.\s*/, "")}`}
               tabIndex={0}
-              className={`group absolute -translate-x-1/2 -translate-y-1/2 rounded-2xl transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
+              className={`group absolute -translate-x-1/2 -translate-y-1/2 rounded-full transition-all duration-300 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 active:scale-95 ${
                 devMode
                   ? "bg-red-500/40 ring-2 ring-red-600"
-                  : "bg-white/0 hover:bg-white/20 hover:shadow-[0_0_30px_rgba(255,255,255,0.6)]"
+                  : "hotspot-idle bg-white/0 hover:scale-110 hover:bg-white/25 hover:shadow-[0_0_40px_rgba(255,255,255,0.85),0_0_18px_rgba(26,58,138,0.45)] hover:backdrop-blur-[1px]"
               }`}
               style={{
                 left: `${s.x}%`,
@@ -181,7 +218,7 @@ function Index() {
 
       <div
         onClick={() => setActive(null)}
-        className={`fixed inset-0 z-40 bg-black/40 transition-opacity duration-300 ${
+        className={`fixed inset-0 z-40 bg-black/50 backdrop-blur-sm transition-opacity duration-300 ${
           active ? "opacity-100" : "pointer-events-none opacity-0"
         }`}
       />
@@ -190,23 +227,23 @@ function Index() {
         role="dialog"
         aria-modal="true"
         aria-label={active?.title ?? "Panel de información"}
-        className={`fixed right-0 top-0 z-50 h-full w-full max-w-[400px] bg-white shadow-2xl transition-transform duration-300 ease-in-out ${
+        className={`fixed right-0 top-0 z-50 h-full w-full max-w-[420px] bg-white shadow-2xl transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${
           active ? "translate-x-0" : "translate-x-full"
         }`}
       >
         {active && (
-          <div className="flex h-full flex-col overflow-y-auto p-6 sm:p-8">
-            <div className="mb-6 flex items-start justify-between gap-4">
-              <h2
-                className="text-2xl font-bold leading-tight"
-                style={{ color: "#1a3a8a" }}
+          <div key={active.id} className="flex h-full flex-col overflow-y-auto p-6 sm:p-8">
+            <div className="mb-2 flex items-start justify-between gap-4">
+              <span
+                className="panel-title inline-block rounded-full px-3 py-1 text-xs font-semibold tracking-wider text-white"
+                style={{ backgroundColor: "#1a3a8a" }}
               >
-                {active.title}
-              </h2>
+                SECTOR {active.id}
+              </span>
               <button
                 onClick={() => setActive(null)}
                 aria-label="Cerrar panel"
-                className="shrink-0 rounded-full p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-900"
+                className="shrink-0 rounded-full p-2 text-gray-500 transition-all duration-200 hover:rotate-90 hover:bg-gray-100 hover:text-gray-900"
               >
                 <svg
                   width="22"
@@ -223,11 +260,28 @@ function Index() {
                 </svg>
               </button>
             </div>
+            <h2
+              className="panel-title mb-6 text-2xl font-bold leading-tight"
+              style={{ color: "#1a3a8a", animationDelay: "60ms" }}
+            >
+              {active.title.replace(/^\d+\.\s*/, "")}
+            </h2>
+            <div
+              className="panel-title mb-6 h-1 w-16 rounded-full"
+              style={{
+                background: "linear-gradient(90deg, #1a3a8a, #4a8fd6)",
+                animationDelay: "120ms",
+              }}
+            />
             <ul className="space-y-3 text-gray-700">
               {active.bullets.map((b, i) => (
-                <li key={i} className="flex gap-3 leading-relaxed">
+                <li
+                  key={i}
+                  className="panel-bullet group/li flex gap-3 rounded-lg p-2 leading-relaxed transition-colors duration-200 hover:bg-blue-50/60"
+                  style={{ animationDelay: `${150 + i * 70}ms` }}
+                >
                   <span
-                    className="mt-2 inline-block h-1.5 w-1.5 shrink-0 rounded-full"
+                    className="mt-2 inline-block h-1.5 w-1.5 shrink-0 rounded-full transition-transform duration-200 group-hover/li:scale-150"
                     style={{ backgroundColor: "#1a3a8a" }}
                   />
                   <span>{b}</span>
