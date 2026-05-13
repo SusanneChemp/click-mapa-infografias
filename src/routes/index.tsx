@@ -131,7 +131,7 @@ function Index() {
       <main className="mx-auto flex min-h-screen w-full max-w-[1400px] items-center justify-center p-2 sm:p-4">
         <div className="relative w-full">
           <img
-            src="/mapa.jpg"
+            src={mapaImg}
             alt="Cadena de producción sostenible de la pesca y acuicultura marina"
             className="block h-auto w-full select-none"
             draggable={false}
